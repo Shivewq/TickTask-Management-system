@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/styles.css">
+  <title>Tickets</title>
+</head>
+<body>
+
+  <h1>Tickets</h1>
+
+  <!-- Add Ticket Form -->
+  <form method="post" id="add-ticket-form" action="/tickets" enctype="multipart/form-data">
+
+    <label for="taskName">Task Name:</label>
+    <input type="text" id="taskName" name="taskName" required>
+
+    <label for="description">Description:</label>
+    <input type="text" id="description" name="description" required>
+
+    <div class="file-upload-container">
+    <label for="image" class="file-upload-button">Choose Image</label>
+    <input type="file" id="image" name="image">
+  </div>
+
+    <label for="status">Status:</label>
+    <select name="status" required>
+      <option value="pending">Pending</option>
+      <option value="inactive">Inactive</option>
+    </select>
+
+    <button type="submit">Add Ticket</button>
+  </form>
+
+  {{#if admin}}
+  <div id="users-container">
+    <h2>Users</h2>
+    {{#each users}}
+      <div class="user">
+        <p>{{userid}}</p>
+      </div>
+    {{/each}}
+  </div>
+  {{/if}}
+
+  <!-- current tickets -->
+  <div id="tickets-container">
+  {{#each ticketEntries}}
+    <div class ="ticket">
+      <h3>{{title}}</h3>
+      <p>{{description}}</p>
+      <p>Status: {{status}}</p>
+      <p>Posted by: {{userid}}</p>
+      <p>Date:{{date}}</p>
+      {{#if image}}
+        <img src="data:image/png;base64,{{image}}" alt="Ticket Image">
+      {{/if}}
+      {{#if @root.admin}}
+        <form method="post" action="/updateTicketStatus/{{title}}" id="{{title}}-form">
+          <label for="status">Update Status:</label>
+          <select name="status" class="status-select">
+            <option value="pending">Pending</option>
+            <option value="inactive">Inactive</option>
+            <option value="complete">Complete</option>
+          </select>
+          <button type="button" onclick="updateTicketStatus('{{title}}', '{{title}}-form')">Update Status</button>
+        </form>
+      {{/if}}
+    </div>
+  {{/each}}
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.0/socket.io.js"></script>
+  
+  <script>
+    function updateTicketStatus(title, formId) {
+      const form = document.getElementById(formId);
+      const selectedStatus = form.querySelector('.status-select').value;
+
+      // Send an asynchronous request to update the status on the server
+      fetch(`/updateTicketStatus/${title}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: selectedStatus,
+        }),
+      })
+        .then(response => response.json())
+        .then(data => {
+          // Handle the response from the server if needed
+          console.log(data);
+
+          // Manually redirect to /tickets after a successful update
+          window.location.href = '/tickets';
+        })
+        .catch(error => {
+          console.error('Error updating status:', error);
+        });
+    }
+  </script>
+
+</body>
+</html>
